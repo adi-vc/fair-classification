@@ -5,7 +5,7 @@ import numpy as np
 from random import seed, shuffle
 from collections import defaultdict
 from copy import deepcopy
-from cvxpy import *
+import cvxpy as cp
 import dccp
 from dccp.problem import is_dccp
 import utils as ut
@@ -58,7 +58,7 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
 
     
     num_points, num_features = x.shape
-    w = Variable(num_features) # this is the weight vector
+    w = cp.Variable(num_features) # this is the weight vector
 
     # initialize a random value of w
     np.random.seed(112233)
@@ -72,7 +72,7 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
 
     if loss_function == "logreg":
         # constructing the logistic loss problem
-        loss = sum_entries(  logistic( mul_elemwise(-y, x*w) )  ) / num_points # we are converting y to a diagonal matrix for consistent
+        loss = cp.sum(  cp.logistic( cp.multiply(-y, x*w) )  ) / num_points # we are converting y to a diagonal matrix for consistent
 
 
     # sometimes, its a good idea to give a starting point to the constrained solver
@@ -85,12 +85,12 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
             take_initial_sol = False
 
         if take_initial_sol == True: # get the initial solution
-            p = Problem(Minimize(loss), [])
+            p = cp.Problem(cp.Minimize(loss), [])
             p.solve()
 
 
     # construct the cvxpy problem
-    prob = Problem(Minimize(loss), constraints)
+    prob = cp.Problem(cp.Minimize(loss), constraints)
 
     # print "\n\n"
     # print "Problem is DCP (disciplined convex program):", prob.is_dcp()
@@ -104,7 +104,7 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
             if cons_params.get("mu") is not None: mu = cons_params["mu"]
 
         prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
-            solver=ECOS, verbose=False, 
+            solver=cp.ECOS, verbose=False, 
             feastol=EPS, abstol=EPS, reltol=EPS,feastol_inacc=EPS, abstol_inacc=EPS, reltol_inacc=EPS,
             max_iters=max_iters, max_iter=max_iter_dccp)
 
@@ -237,11 +237,11 @@ def get_constraint_list_cov(x_train, y_train, x_control_train, sensitive_attrs_t
 
                 #################################################################
                 # #DCCP constraints
-                dist_bound_prod = mul_elemwise(y_train[idx], x_train[idx] * w) # y.f(x)
+                dist_bound_prod = cp.multiply(y_train[idx], x_train[idx] * w) # y.f(x)
                 
-                cons_sum_dict[0][v] = sum_entries( min_elemwise(0, dist_bound_prod) ) * (s_val_to_avg[0][v] / len(x_train)) # avg misclassification distance from boundary
-                cons_sum_dict[1][v] = sum_entries( min_elemwise(0, mul_elemwise( (1 - y_train[idx])/2.0, dist_bound_prod) ) ) * (s_val_to_avg[1][v] / sum(y_train == -1)) # avg false positive distance from boundary (only operates on the ground truth neg dataset)
-                cons_sum_dict[2][v] = sum_entries( min_elemwise(0, mul_elemwise( (1 + y_train[idx])/2.0, dist_bound_prod) ) ) * (s_val_to_avg[2][v] / sum(y_train == +1)) # avg false negative distance from boundary
+                cons_sum_dict[0][v] = cp.sum( cp.minimum(0, dist_bound_prod) ) * (s_val_to_avg[0][v] / len(x_train)) # avg misclassification distance from boundary
+                cons_sum_dict[1][v] = cp.sum( cp.minimum(0, cp.multiply( (1 - y_train[idx])/2.0, dist_bound_prod) ) ) * (s_val_to_avg[1][v] / sum(y_train == -1)) # avg false positive distance from boundary (only operates on the ground truth neg dataset)
+                cons_sum_dict[2][v] = cp.sum( cp.minimum(0, cp.multiply( (1 + y_train[idx])/2.0, dist_bound_prod) ) ) * (s_val_to_avg[2][v] / sum(y_train == +1)) # avg false negative distance from boundary
                 #################################################################
 
                 
