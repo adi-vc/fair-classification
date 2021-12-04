@@ -120,7 +120,7 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
 
     # check that the fairness constraint is satisfied
     for f_c in constraints:
-        assert(f_c.value == True) # can comment this out if the solver fails too often, but make sure that the constraints are satisfied empirically. alternatively, consider increasing tau parameter
+        #assert(f_c.value == True) # can comment this out if the solver fails too often, but make sure that the constraints are satisfied empirically. alternatively, consider increasing tau parameter
         pass
         
 
