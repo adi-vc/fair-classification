@@ -29,7 +29,7 @@ def check_data_file(fname):
         addr = "https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv"
         response = urllib.request.urlopen(addr)
         data = response.read()
-        fileOut = open(fname, "w")
+        fileOut = open(fname, "wb")
         fileOut.write(data)
         fileOut.close()
         print("'%s' download and saved locally.." % fname)
