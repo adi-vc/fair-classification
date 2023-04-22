@@ -7,27 +7,30 @@ from random import seed, shuffle
 SEED = 1122334455
 seed(SEED) # set the random seed so that the random permutations can be reproduced again
 np.random.seed(SEED)
+DATA_DIR = '../../data/adult/'
+import pathlib
+pathlib.Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
 
 """
     The adult dataset can be obtained from: http://archive.ics.uci.edu/ml/datasets/Adult
-    The code will look for the data files (adult.data, adult.test) in the present directory, if they are not found, it will download them from UCI archive.
+    The code will look for the data files (adult.data, adult.test) in the data directory, if they are not found, it will download them from UCI archive.
 """
 
 def check_data_file(fname):
-    files = os.listdir(".") # get the current directory listing
-    print("Looking for file '%s' in the current directory..." % fname)
+    files = os.listdir(DATA_DIR) # get the data directory listing
+    print("Looking for file '%s' in the data directory..." % fname)
 
     if fname not in files:
         print("'%s' not found! Downloading from UCI Archive..." % fname)
         addr = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/%s" % fname
         response = urllib.request.urlopen(addr)
         data = response.read()
-        fileOut = open(fname, "w")
+        fileOut = open(DATA_DIR + fname, "wb")
         fileOut.write(data)
         fileOut.close()
         print("'%s' download and saved locally.." % fname)
     else:
-        print("File found in current directory..")
+        print("File found in the data directory..")
     
     print()
     return
@@ -67,7 +70,7 @@ def load_adult_data(load_data_size=None):
     for f in data_files:
         check_data_file(f)
 
-        for line in open(f):
+        for line in open(DATA_DIR + f):
             line = line.strip()
             if line == "": continue # skip empty lines
             line = line.split(", ")
