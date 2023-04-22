@@ -1,2 +1,8 @@
 **/__pycache__
 **/dccp.log
+
+# VSCode
+.vscode/
+
+# Data directory
+data/
